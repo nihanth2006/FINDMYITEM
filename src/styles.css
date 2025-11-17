@@ -1,0 +1,352 @@
+/* =========================================
+   GLOBAL STYLES
+========================================= */
+body {
+  margin: 0;
+  padding: 0;
+  font-family: Arial, sans-serif;
+  background: #ffffff;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  outline: none;
+}
+
+/* =========================================
+   🔴 COMMON HEADER (HOME + ITEMS PAGE)
+========================================= */
+.top-header,
+.items-header {
+  background: #e23314;
+  padding: 18px 35px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: white;
+
+  /* Curved header */
+  border-radius: 40px;
+
+  /* Not touching top */
+  margin: 20px auto 0 auto;
+
+  width: 90%;
+
+  /* Smooth shadow */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.uni-box {
+  background: white;
+  padding: 10px 20px;
+  border-radius: 8px;
+  color: #e23314;
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.header-right,
+.top-actions {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.circle-btn {
+  width: 55px;
+  height: 55px;
+  background: white;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  color: #e23314;
+}
+
+.about-btn {
+  background: #ffd32a;
+  padding: 13px 25px;
+  border-radius: 25px;
+  font-weight: bold;
+  font-size: 15px;
+  color: black;
+}
+
+/* =========================================
+   HOME PAGE SPLIT LAYOUT
+========================================= */
+.split-container {
+  display: flex;
+  height: calc(100vh - 120px);
+}
+
+.left-section {
+  flex: 1;
+  background: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.big-logo {
+  font-size: 60px;
+  font-weight: 900;
+  color: #2e004f;
+  font-family: "Georgia", serif;
+}
+
+/* PURPLE PANEL WITH CURVED CORNERS */
+.right-section {
+  flex: 1;
+  background: #2a0a4a;
+  color: white;
+  padding: 80px 60px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+
+  border-radius: 40px;
+  margin: 30px;
+}
+
+/* Other components remain unchanged… */
+/* MAIN PAGE BUTTONS — RESTORED */
+.button-row {
+  display: flex;
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.main-btn {
+  background-color: #c62828; /* RED BUTTON */
+  color: white;
+  padding: 12px 28px;
+  border-radius: 6px; /* ROUNDED CORNERS */
+  font-size: 16px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  min-width: 140px;
+  text-align: center;
+  transition: 0.2s ease-in-out;
+}
+
+/* YELLOW HISTORY BUTTON (VISUALLY LIKE BEFORE) */
+.main-btn.history-btn {
+  background-color: #ffd32a;
+  color: black;
+}
+
+/* Hover effect */
+.main-btn:hover {
+  transform: scale(1.05);
+  background-color: #a31212;
+}
+
+.main-btn.history-btn:hover {
+  background-color: #e5c023;
+  transform: scale(1.05);
+}
+/* ============================================================
+   RESTORED GLOBAL PAGE STYLES (FOR ALL PAGES EXCEPT HOMEPAGE)
+==============================================================*/
+
+/* PAGE CONTENT WRAPPER */
+.items-content {
+  padding: 40px;
+  display: flex;
+  justify-content: space-between;
+}
+
+/* GRID of cards */
+.items-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 350px);
+  gap: 50px;
+}
+
+/* ITEM CARD */
+.item-card {
+  width: 350px;
+}
+
+/* IMAGE BOX */
+.item-image-box {
+  width: 100%;
+  height: 260px;
+  background: #d4d7db;
+  border-radius: 5px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.plus-icon {
+  color: #000;
+}
+
+/* ADD / REMOVE button row */
+.item-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.add-btn {
+  background: linear-gradient(to right, #fdd32a, #dc220e);
+  color: white;
+  padding: 10px 22px;
+  border-radius: 5px;
+  font-weight: 700;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.remove-btn {
+  background: linear-gradient(to right, #dc220e, #1d1c1c);
+  color: white;
+  padding: 10px 22px;
+  border-radius: 5px;
+  font-weight: 700;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+/* ITEM DETAILS */
+.item-details {
+  margin-top: 20px;
+}
+
+.label {
+  font-weight: 800;
+  font-size: 15px;
+}
+
+.value {
+  margin-bottom: 12px;
+}
+
+/* BIG ADD ITEM BUTTON (right side) */
+.big-add-item-btn {
+  background: #e23314;
+  color: white;
+  padding: 18px 45px;
+  font-size: 20px;
+  border-radius: 20px;
+  font-weight: bold;
+  height: fit-content;
+  cursor: pointer;
+}
+
+/* ============================================================
+   RAISE TICKET PAGE – SAME AS OLD ONE
+==============================================================*/
+
+.items-title {
+  font-size: 26px;
+  font-weight: 800;
+}
+
+/* ============================================================
+   REMOVE ITEM PAGE – SAME AS OLD ONE
+==============================================================*/
+
+.remove-item-card .item-details p {
+  font-size: 16px;
+}
+
+/* ============================================================
+   DELIVERED PAGE – RESTORED
+==============================================================*/
+
+.delivered-title {
+  background: #ffd32a;
+  padding: 12px 40px;
+  border-radius: 25px;
+  font-weight: 800;
+  color: black;
+  font-size: 18px;
+}
+
+.delivered-info {
+  margin-top: 60px;
+  text-align: center;
+  font-weight: bold;
+}
+
+.delivered-info h2,
+.delivered-info h3 {
+  margin: 0;
+  font-size: 22px;
+}
+
+/* ============================================================
+   ADMIN DASHBOARD – RESTORED
+==============================================================*/
+
+.admin-container {
+  display: flex;
+  justify-content: space-between;
+  padding: 30px 40px;
+  gap: 40px;
+}
+
+.admin-block {
+  width: 48%;
+}
+
+.admin-title {
+  font-size: 32px;
+  font-weight: 800;
+  margin-bottom: 20px;
+}
+
+.section-title {
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 15px;
+}
+
+.admin-card {
+  background: #fafafa;
+  padding: 20px;
+  border-radius: 10px;
+  border-left: 5px solid #c62828;
+  box-shadow: 0px 3px 8px rgba(0, 0, 0, 0.1);
+}
+
+.admin-card p {
+  font-size: 18px;
+  margin: 8px 0;
+}
+
+.admin-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.admin-btn {
+  background: #c62828;
+  color: white;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  min-width: 200px;
+  text-align: center;
+  transition: 0.2s;
+}
+
+.admin-btn:hover {
+  background: #a31212;
+  transform: scale(1.02);
+}
