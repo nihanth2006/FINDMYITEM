@@ -1,7 +1,7 @@
 {
-  "buildCommand": "npm run build",
+  "buildCommand": "node node_modules/react-scripts/scripts/build.js",
   "outputDirectory": "build",
-  "installCommand": "npm install --legacy-peer-deps",
+  "installCommand": "npm install --legacy-peer-deps && npm rebuild",
   "env": {
     "CI": "false"
   }
