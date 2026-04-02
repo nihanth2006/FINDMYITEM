@@ -24,8 +24,12 @@
     "build": "react-scripts build",
     "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject",
+    "server": "cd server && node server.js",
+    "server:install": "cd server && npm install",
+    "dev": "react-scripts start",
     "postinstall": "npm rebuild"
   },
+  "proxy": "http://localhost:5000",
   "browserslist": [
     ">0.2%",
     "not dead",

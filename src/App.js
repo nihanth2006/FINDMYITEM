@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 
 // Pages
 import HomePage from "./Pages/HomePage";
@@ -6,86 +6,212 @@ import ItemsPage from "./Pages/ItemsPage";
 import RaiseTicketPage from "./Pages/rise";
 import RemoveItemPage from "./Pages/RemoveItemPage";
 import DeliveredItemsPage from "./Pages/DeliveredItemsPage";
-import AdminDashboard from "./Pages/AdminDashboard"; // ✅ Admin Page
+import AdminDashboard from "./Pages/AdminDashboard";
+import AboutPage from "./Pages/AboutPage";
+import LoginPage from "./Pages/LoginPage";
+import AddFoundItemForm from "./Pages/AddFoundItemForm";
+import RaiseTicketForm from "./Pages/RaiseTicketForm";
+import AddHandoverForm from "./Pages/AddHandoverForm";
+
+// API
+import {
+  authAPI,
+  foundItemsAPI,
+  lostItemsAPI,
+  handoverAPI,
+  deliveredAPI,
+} from "./api";
 
 import "./styles.css";
 
 const App = () => {
   const [currentPage, setCurrentPage] = useState("home");
+  const [loading, setLoading] = useState(false);
 
-  // FOUND ITEMS (ItemsPage)
-  const [foundItems, setFoundItems] = useState([
-    {
-      id: 1,
-      name: "Blue Backpack",
-      placeFound: "Library",
-      location: "Security Office - Block A",
-    },
-    {
-      id: 2,
-      name: "Student ID Card",
-      placeFound: "Cafeteria",
-      location: "Admin Office",
-    },
-  ]);
+  // DATA STATE
+  const [foundItems, setFoundItems] = useState([]);
+  const [lostItems, setLostItems] = useState([]);
+  const [itemsToHandover, setItemsToHandover] = useState([]);
+  const [deliveredItems, setDeliveredItems] = useState([]);
 
-  // LOST ITEMS (Raise Ticket Page)
-  const [lostItems, setLostItems] = useState([
-    {
-      id: 1,
-      name: "Laptop",
-      placeLost: "Computer Lab",
-      idNo: "2100031234",
-      mobile: "9876543210",
-      daysAgo: "2 days",
-    },
-    {
-      id: 2,
-      name: "Textbook",
-      placeLost: "Classroom 305",
-      idNo: "2100035678",
-      mobile: "9876543211",
-      daysAgo: "1 day",
-    },
-  ]);
+  // AUTH STATE
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [adminInfo, setAdminInfo] = useState(null);
 
-  // HANDOVER ITEMS (Remove Item Page)
-  const [itemsToHandover, setItemsToHandover] = useState([
-    { id: 1, name: "Water Bottle", personName: "Rahul Kumar" },
-  ]);
+  // ==================== FETCH DATA FROM API ====================
+  const fetchFoundItems = useCallback(async () => {
+    try {
+      const data = await foundItemsAPI.getAll();
+      setFoundItems(data);
+    } catch {
+      console.log("Backend not available, using local state");
+    }
+  }, []);
 
-  // DELIVERED ITEMS PAGE
-  const [deliveredItems, setDeliveredItems] = useState([
-    {
-      id: 1,
-      name: "Mobile Phone",
-      personName: "Priya Sharma",
-      mobile: "9876543212",
-    },
-  ]);
+  const fetchLostItems = useCallback(async () => {
+    try {
+      const data = await lostItemsAPI.getAll();
+      setLostItems(data);
+    } catch {
+      console.log("Backend not available, using local state");
+    }
+  }, []);
 
-  // DELIVER FUNCTION
-  const handleDeliverItem = (id) => {
-    const item = itemsToHandover.find((i) => i.id === id);
-    setDeliveredItems([...deliveredItems, item]);
-    setItemsToHandover(itemsToHandover.filter((i) => i.id !== id));
+  const fetchHandoverItems = useCallback(async () => {
+    try {
+      const data = await handoverAPI.getAll();
+      setItemsToHandover(data);
+    } catch {
+      console.log("Backend not available, using local state");
+    }
+  }, []);
 
-    setCurrentPage("delivered"); // Go to delivered page
+  const fetchDeliveredItems = useCallback(async () => {
+    try {
+      const data = await deliveredAPI.getAll();
+      setDeliveredItems(data);
+    } catch {
+      console.log("Backend not available, using local state");
+    }
+  }, []);
+
+  // Load all data on mount
+  useEffect(() => {
+    fetchFoundItems();
+    fetchLostItems();
+    fetchHandoverItems();
+    fetchDeliveredItems();
+  }, [fetchFoundItems, fetchLostItems, fetchHandoverItems, fetchDeliveredItems]);
+
+  // Check for existing auth token
+  useEffect(() => {
+    const token = localStorage.getItem("adminToken");
+    if (token) {
+      authAPI
+        .verify()
+        .then((data) => {
+          setIsLoggedIn(true);
+          setAdminInfo(data.admin);
+        })
+        .catch(() => {
+          localStorage.removeItem("adminToken");
+        });
+    }
+  }, []);
+
+  // Refresh data when navigating to a page
+  useEffect(() => {
+    if (currentPage === "items") fetchFoundItems();
+    if (currentPage === "raise-ticket") fetchLostItems();
+    if (currentPage === "remove-item") fetchHandoverItems();
+    if (currentPage === "delivered") fetchDeliveredItems();
+    if (currentPage === "admin") {
+      fetchFoundItems();
+      fetchLostItems();
+      fetchHandoverItems();
+      fetchDeliveredItems();
+    }
+  }, [currentPage, fetchFoundItems, fetchLostItems, fetchHandoverItems, fetchDeliveredItems]);
+
+  // ==================== AUTH HANDLERS ====================
+  const handleLogin = async (username, password) => {
+    const data = await authAPI.login(username, password);
+    localStorage.setItem("adminToken", data.token);
+    setIsLoggedIn(true);
+    setAdminInfo(data.admin);
+    setCurrentPage("admin");
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("adminToken");
+    setIsLoggedIn(false);
+    setAdminInfo(null);
+    setCurrentPage("home");
+  };
+
+  // ==================== FOUND ITEMS HANDLERS ====================
+  const handleAddFoundItem = async (formData) => {
+    await foundItemsAPI.create(formData);
+    await fetchFoundItems();
+  };
+
+  const handleRemoveFoundItem = async (id) => {
+    try {
+      await foundItemsAPI.delete(id);
+      await fetchFoundItems();
+    } catch {
+      setFoundItems(foundItems.filter((i) => i.id !== id));
+    }
+  };
+
+  // ==================== LOST ITEMS HANDLERS ====================
+  const handleRaiseTicket = async (formData) => {
+    await lostItemsAPI.create(formData);
+    await fetchLostItems();
+  };
+
+  const handleRemoveLostItem = async (id) => {
+    try {
+      await lostItemsAPI.delete(id);
+      await fetchLostItems();
+    } catch {
+      setLostItems(lostItems.filter((i) => i.id !== id));
+    }
+  };
+
+  // ==================== HANDOVER HANDLERS ====================
+  const handleAddHandover = async (data) => {
+    await handoverAPI.create(data);
+    await fetchHandoverItems();
+  };
+
+  const handleDeliverItem = async (id) => {
+    try {
+      await handoverAPI.deliver(id);
+      await fetchHandoverItems();
+      await fetchDeliveredItems();
+      setCurrentPage("delivered");
+    } catch {
+      // Fallback: move locally
+      const item = itemsToHandover.find((i) => i.id === id);
+      if (item) {
+        setDeliveredItems([...deliveredItems, item]);
+        setItemsToHandover(itemsToHandover.filter((i) => i.id !== id));
+        setCurrentPage("delivered");
+      }
+    }
+  };
+
+  // ==================== NAVIGATION HANDLER ====================
+  const handleNavigate = (page) => {
+    // Redirect to login if accessing admin without auth
+    if (page === "admin" && !isLoggedIn) {
+      setCurrentPage("login");
+      return;
+    }
+    setCurrentPage(page);
   };
 
   return (
     <>
       {/* HOME PAGE */}
-      {currentPage === "home" && <HomePage onNavigate={setCurrentPage} />}
+      {currentPage === "home" && <HomePage onNavigate={handleNavigate} />}
 
       {/* ITEMS PAGE */}
       {currentPage === "items" && (
         <ItemsPage
           foundItems={foundItems}
-          onRemoveFromFound={(id) =>
-            setFoundItems(foundItems.filter((i) => i.id !== id))
-          }
-          onNavigate={setCurrentPage}
+          onRemoveFromFound={handleRemoveFoundItem}
+          onNavigate={handleNavigate}
+          loading={loading}
+        />
+      )}
+
+      {/* ADD FOUND ITEM FORM */}
+      {currentPage === "add-found-item" && (
+        <AddFoundItemForm
+          onNavigate={handleNavigate}
+          onItemAdded={handleAddFoundItem}
         />
       )}
 
@@ -93,10 +219,17 @@ const App = () => {
       {currentPage === "raise-ticket" && (
         <RaiseTicketPage
           lostItems={lostItems}
-          onRemoveFromLost={(id) =>
-            setLostItems(lostItems.filter((i) => i.id !== id))
-          }
-          onNavigate={setCurrentPage}
+          onRemoveFromLost={handleRemoveLostItem}
+          onNavigate={handleNavigate}
+          loading={loading}
+        />
+      )}
+
+      {/* RAISE TICKET FORM */}
+      {currentPage === "raise-ticket-form" && (
+        <RaiseTicketForm
+          onNavigate={handleNavigate}
+          onTicketRaised={handleRaiseTicket}
         />
       )}
 
@@ -105,7 +238,16 @@ const App = () => {
         <RemoveItemPage
           itemsToHandover={itemsToHandover}
           onDeliverItem={handleDeliverItem}
-          onNavigate={setCurrentPage}
+          onNavigate={handleNavigate}
+          loading={loading}
+        />
+      )}
+
+      {/* ADD HANDOVER FORM */}
+      {currentPage === "add-handover" && (
+        <AddHandoverForm
+          onNavigate={handleNavigate}
+          onHandoverAdded={handleAddHandover}
         />
       )}
 
@@ -113,14 +255,27 @@ const App = () => {
       {currentPage === "delivered" && (
         <DeliveredItemsPage
           deliveredItems={deliveredItems}
-          onNavigate={setCurrentPage}
+          onNavigate={handleNavigate}
+          loading={loading}
         />
       )}
 
-      {/* ⭐ ADMIN DASHBOARD PAGE ⭐ */}
-      {currentPage === "admin" && (
-        <AdminDashboard onNavigate={setCurrentPage} />
+      {/* LOGIN PAGE */}
+      {currentPage === "login" && (
+        <LoginPage onNavigate={handleNavigate} onLogin={handleLogin} />
       )}
+
+      {/* ADMIN DASHBOARD */}
+      {currentPage === "admin" && (
+        <AdminDashboard
+          onNavigate={handleNavigate}
+          adminInfo={adminInfo}
+          onLogout={handleLogout}
+        />
+      )}
+
+      {/* ABOUT PAGE */}
+      {currentPage === "about" && <AboutPage onNavigate={handleNavigate} />}
     </>
   );
 };
