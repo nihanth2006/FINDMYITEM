@@ -26,6 +26,9 @@ On Render free, local files are not permanent across redeploys or restarts. The 
    - one `Web Service` for the backend
    - one `Static Site` for the frontend
 6. Deploy both services.
+7. After the backend finishes deploying, open the frontend service in Render and add:
+   - `REACT_APP_API_URL=https://your-backend-name.onrender.com`
+8. Redeploy the frontend once after setting that variable.
 
 ## Option 2: Manual deploy
 

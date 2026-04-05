@@ -12,8 +12,9 @@ services:
       - key: JWT_SECRET
         generateValue: true
 
-staticSites:
-  - name: findmyitem-web
+  - type: web
+    name: findmyitem-web
+    runtime: static
     rootDir: .
     buildCommand: npm install && npm run build
     staticPublishPath: build
@@ -21,11 +22,6 @@ staticSites:
     envVars:
       - key: NODE_VERSION
         value: 20
-      - key: REACT_APP_API_URL
-        fromService:
-          type: web
-          name: findmyitem-api
-          property: host
     routes:
       - type: rewrite
         source: /*
