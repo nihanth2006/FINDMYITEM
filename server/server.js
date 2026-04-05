@@ -310,7 +310,8 @@ app.post('/api/upload', upload.single('image'), (req, res) => {
 });
 
 // ==================== SERVE REACT BUILD IN PRODUCTION ====================
-if (process.env.NODE_ENV === 'production') {
+// Only enable this when frontend and backend are deployed together.
+if (process.env.SERVE_FRONTEND === 'true') {
   app.use(express.static(path.join(__dirname, '..', 'build')));
   app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'build', 'index.html'));
