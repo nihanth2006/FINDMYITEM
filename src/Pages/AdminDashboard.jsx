@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Home, User, LogOut, Package, AlertTriangle, Truck, CheckCircle } from "lucide-react";
+import { LogOut, Package, AlertTriangle, Truck, CheckCircle } from "lucide-react";
 import Header from "./Header";
 import { statsAPI } from "../api";
 
@@ -14,18 +14,26 @@ const AdminDashboard = ({ onNavigate, adminInfo, onLogout }) => {
 
   return (
     <div className="admin-page">
-      {/* Curved Header wrapper */}
-      <div className="top-header">
-        <Header onNavigate={onNavigate} />
-      </div>
+      <Header onNavigate={onNavigate} />
 
       <div className="admin-container">
-        {/* LEFT BLOCK */}
         <div className="admin-block">
-          <h1 className="admin-title">ADMIN DASHBOARD</h1>
+          <div className="admin-card">
+            <div className="admin-overview">
+              <div>
+                <div className="admin-eyebrow">Control center</div>
+                <h1 className="admin-title">Admin Dashboard</h1>
+                <p className="admin-summary">
+                  Monitor active records, review handovers, and move quickly between
+                  daily campus operations from a single dashboard.
+                </p>
+              </div>
+              <div className="session-pill">Session Active</div>
+            </div>
+          </div>
 
           <div className="admin-card">
-            <h2 className="section-title">Admin Login Details</h2>
+            <h2 className="section-title">Admin Profile</h2>
             <p>
               <strong>Admin ID:</strong> {adminInfo?.username || "KL-ADMIN-001"}
             </p>
@@ -35,12 +43,8 @@ const AdminDashboard = ({ onNavigate, adminInfo, onLogout }) => {
             <p>
               <strong>Name:</strong> {adminInfo?.name || "KL Admin"}
             </p>
-            <p>
-              <strong>Session:</strong> Active
-            </p>
           </div>
 
-          {/* STATS CARDS */}
           {stats && (
             <div className="stats-grid">
               <div className="stat-card stat-found">
@@ -75,36 +79,40 @@ const AdminDashboard = ({ onNavigate, adminInfo, onLogout }) => {
           )}
         </div>
 
-        {/* RIGHT BLOCK */}
         <div className="admin-block">
-          <h2 className="section-title">Quick Actions</h2>
+          <div className="action-panel">
+            <h2 className="section-title">Quick Actions</h2>
+            <p className="admin-summary">
+              Jump directly into the workflows your team uses most often.
+            </p>
 
-          <div className="admin-actions">
-            <button className="admin-btn" onClick={() => onNavigate("items")}>
-              View Found Items
-            </button>
-            <button className="admin-btn" onClick={() => onNavigate("raise-ticket")}>
-              View Lost Tickets
-            </button>
-            <button className="admin-btn" onClick={() => onNavigate("remove-item")}>
-              Handover Items
-            </button>
-            <button className="admin-btn" onClick={() => onNavigate("delivered")}>
-              Delivery History
-            </button>
-            <button className="admin-btn" onClick={() => onNavigate("add-found-item")}>
-              Add Found Item
-            </button>
-            <button className="admin-btn" onClick={() => onNavigate("raise-ticket-form")}>
-              Raise Lost Ticket
-            </button>
+            <div className="admin-actions">
+              <button className="admin-btn" onClick={() => onNavigate("items")}>
+                View Found Items
+              </button>
+              <button className="admin-btn" onClick={() => onNavigate("raise-ticket")}>
+                View Lost Tickets
+              </button>
+              <button className="admin-btn" onClick={() => onNavigate("remove-item")}>
+                Manage Handover
+              </button>
+              <button className="admin-btn" onClick={() => onNavigate("delivered")}>
+                Delivery History
+              </button>
+              <button className="admin-btn" onClick={() => onNavigate("add-found-item")}>
+                Add Found Item
+              </button>
+              <button className="admin-btn" onClick={() => onNavigate("raise-ticket-form")}>
+                Raise Lost Ticket
+              </button>
+            </div>
+
+            {onLogout && (
+              <button className="logout-btn" onClick={onLogout}>
+                <LogOut size={18} /> Logout
+              </button>
+            )}
           </div>
-
-          {onLogout && (
-            <button className="logout-btn" onClick={onLogout}>
-              <LogOut size={18} /> LOGOUT
-            </button>
-          )}
         </div>
       </div>
     </div>
