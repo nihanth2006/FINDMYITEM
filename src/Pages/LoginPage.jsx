@@ -79,7 +79,7 @@ const LoginPage = ({ onNavigate, onLogin }) => {
             </button>
           </form>
 
-          <p className="login-hint">Admin: nihanth1006 / Nihanth@2006#</p>
+          <p className="login-hint">Use your configured admin credentials</p>
         </div>
       </div>
     </div>

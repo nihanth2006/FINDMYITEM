@@ -44,7 +44,7 @@ const App = () => {
       const data = await foundItemsAPI.getAll();
       setFoundItems(data);
     } catch {
-      console.log("Backend not available, using local state");
+      setFoundItems([]);
     }
   }, []);
 
@@ -53,7 +53,7 @@ const App = () => {
       const data = await lostItemsAPI.getAll();
       setLostItems(data);
     } catch {
-      console.log("Backend not available, using local state");
+      setLostItems([]);
     }
   }, []);
 
@@ -62,7 +62,7 @@ const App = () => {
       const data = await handoverAPI.getAll();
       setItemsToHandover(data);
     } catch {
-      console.log("Backend not available, using local state");
+      setItemsToHandover([]);
     }
   }, []);
 
@@ -71,7 +71,7 @@ const App = () => {
       const data = await deliveredAPI.getAll();
       setDeliveredItems(data);
     } catch {
-      console.log("Backend not available, using local state");
+      setDeliveredItems([]);
     }
   }, []);
 
@@ -136,12 +136,8 @@ const App = () => {
   };
 
   const handleRemoveFoundItem = async (id) => {
-    try {
-      await foundItemsAPI.delete(id);
-      await fetchFoundItems();
-    } catch {
-      setFoundItems(foundItems.filter((i) => i.id !== id));
-    }
+    await foundItemsAPI.delete(id);
+    await fetchFoundItems();
   };
 
   // ==================== LOST ITEMS HANDLERS ====================
@@ -151,12 +147,8 @@ const App = () => {
   };
 
   const handleRemoveLostItem = async (id) => {
-    try {
-      await lostItemsAPI.delete(id);
-      await fetchLostItems();
-    } catch {
-      setLostItems(lostItems.filter((i) => i.id !== id));
-    }
+    await lostItemsAPI.delete(id);
+    await fetchLostItems();
   };
 
   // ==================== HANDOVER HANDLERS ====================
@@ -166,20 +158,10 @@ const App = () => {
   };
 
   const handleDeliverItem = async (id) => {
-    try {
-      await handoverAPI.deliver(id);
-      await fetchHandoverItems();
-      await fetchDeliveredItems();
-      setCurrentPage("delivered");
-    } catch {
-      // Fallback: move locally
-      const item = itemsToHandover.find((i) => i.id === id);
-      if (item) {
-        setDeliveredItems([...deliveredItems, item]);
-        setItemsToHandover(itemsToHandover.filter((i) => i.id !== id));
-        setCurrentPage("delivered");
-      }
-    }
+    await handoverAPI.deliver(id);
+    await fetchHandoverItems();
+    await fetchDeliveredItems();
+    setCurrentPage("delivered");
   };
 
   // ==================== NAVIGATION HANDLER ====================

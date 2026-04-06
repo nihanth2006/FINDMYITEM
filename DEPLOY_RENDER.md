@@ -68,10 +68,10 @@ Add a rewrite rule:
 
 ## First login
 
-Current default admin login is:
+Use the admin credentials configured in your environment variables:
 
-- Username: `nihanth1006`
-- Password: `Nihanth@2006#`
+- `ADMIN_USERNAME`
+- `ADMIN_PASSWORD`
 
 You should change this before real use.
 
@@ -79,4 +79,4 @@ You should change this before real use.
 
 1. Move item data from `db.json` to a real database like Supabase Postgres.
 2. Move uploaded images from local disk to Cloudinary or Supabase Storage.
-3. Replace the default admin credentials and keep `JWT_SECRET` only in environment variables.
+3. Keep admin credentials and `JWT_SECRET` only in environment variables.
