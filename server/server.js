@@ -5,74 +5,180 @@ const path = require('path');
 const multer = require('multer');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { Pool } = require('pg');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 const JWT_SECRET = process.env.JWT_SECRET || 'findmyitem-klu-secret-2024';
+const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'nihanth1006';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'Nihanth@2006#';
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@klu.edu.in';
+const ADMIN_NAME = process.env.ADMIN_NAME || 'KL Admin';
+const DATABASE_URL = process.env.DATABASE_URL;
+const DB_SSL_ENABLED = process.env.DB_SSL === 'true';
+
+if (!DATABASE_URL) {
+  throw new Error('DATABASE_URL is required. Set it in your environment before starting the server.');
+}
+
+const pool = new Pool({
+  connectionString: DATABASE_URL,
+  ssl: DB_SSL_ENABLED ? { rejectUnauthorized: false } : false
+});
 
 // ==================== MIDDLEWARE ====================
 app.use(cors());
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// ==================== JSON FILE DATABASE ====================
-const DB_PATH = path.join(__dirname, 'data', 'db.json');
-
-function readDB() {
-  const data = fs.readFileSync(DB_PATH, 'utf8');
-  return JSON.parse(data);
+// Ensure upload directory exists
+const uploadsDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
-function writeDB(data) {
-  fs.writeFileSync(DB_PATH, JSON.stringify(data, null, 2));
-}
-
-// Ensure directories exist
-['data', 'uploads'].forEach(dir => {
-  const dirPath = path.join(__dirname, dir);
-  if (!fs.existsSync(dirPath)) fs.mkdirSync(dirPath, { recursive: true });
-});
-
-// Initialize DB with seed data if not exists
-if (!fs.existsSync(DB_PATH)) {
-  const initialData = {
-    admin: {
-      username: 'admin',
-      password: bcrypt.hashSync('admin123', 10),
-      email: 'admin@klu.edu.in',
-      name: 'KL Admin'
-    },
-    foundItems: [
-      { id: 1, name: 'Blue Backpack', placeFound: 'Library', location: 'Security Office - Block A', image: null, createdAt: new Date().toISOString() },
-      { id: 2, name: 'Student ID Card', placeFound: 'Cafeteria', location: 'Admin Office', image: null, createdAt: new Date().toISOString() }
-    ],
-    lostItems: [
-      { id: 1, name: 'Laptop', placeLost: 'Computer Lab', idNo: '2100031234', mobile: '9876543210', daysAgo: '2 days', image: null, createdAt: new Date().toISOString() },
-      { id: 2, name: 'Textbook', placeLost: 'Classroom 305', idNo: '2100035678', mobile: '9876543211', daysAgo: '1 day', image: null, createdAt: new Date().toISOString() }
-    ],
-    handoverItems: [
-      { id: 1, name: 'Water Bottle', personName: 'Rahul Kumar', mobile: '9876543213', createdAt: new Date().toISOString() }
-    ],
-    deliveredItems: [
-      { id: 1, name: 'Mobile Phone', personName: 'Priya Sharma', mobile: '9876543212', deliveredAt: new Date().toISOString() }
-    ],
-    nextId: 100
+function mapAdmin(row) {
+  return {
+    username: row.username,
+    email: row.email,
+    name: row.name
   };
-  writeDB(initialData);
 }
 
-// Auto-increment ID helper
-function getNextId() {
-  const db = readDB();
-  const id = db.nextId || 100;
-  db.nextId = id + 1;
-  writeDB(db);
-  return id;
+function mapFoundItem(row) {
+  return {
+    id: row.id,
+    name: row.name,
+    placeFound: row.place_found,
+    location: row.location,
+    image: row.image,
+    createdAt: row.created_at
+  };
+}
+
+function mapLostItem(row) {
+  return {
+    id: row.id,
+    name: row.name,
+    placeLost: row.place_lost,
+    idNo: row.id_no,
+    mobile: row.mobile,
+    daysAgo: row.days_ago,
+    image: row.image,
+    createdAt: row.created_at
+  };
+}
+
+function mapHandoverItem(row) {
+  return {
+    id: row.id,
+    name: row.name,
+    personName: row.person_name,
+    mobile: row.mobile,
+    createdAt: row.created_at
+  };
+}
+
+function mapDeliveredItem(row) {
+  return {
+    id: row.id,
+    name: row.name,
+    personName: row.person_name,
+    mobile: row.mobile,
+    deliveredAt: row.delivered_at
+  };
+}
+
+function toUploadPath(file) {
+  return file ? `/uploads/${file.filename}` : null;
+}
+
+async function query(text, params = []) {
+  return pool.query(text, params);
+}
+
+async function ensureSchema() {
+  await query(`
+    CREATE TABLE IF NOT EXISTS admins (
+      id SERIAL PRIMARY KEY,
+      username VARCHAR(100) UNIQUE NOT NULL,
+      password_hash TEXT NOT NULL,
+      email VARCHAR(255),
+      name VARCHAR(255),
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS found_items (
+      id SERIAL PRIMARY KEY,
+      name VARCHAR(255) NOT NULL,
+      place_found VARCHAR(255) NOT NULL,
+      location VARCHAR(255) NOT NULL,
+      image TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS lost_items (
+      id SERIAL PRIMARY KEY,
+      name VARCHAR(255) NOT NULL,
+      place_lost VARCHAR(255) NOT NULL,
+      id_no VARCHAR(100) NOT NULL,
+      mobile VARCHAR(30) NOT NULL,
+      days_ago VARCHAR(100),
+      image TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS handover_items (
+      id SERIAL PRIMARY KEY,
+      name VARCHAR(255) NOT NULL,
+      person_name VARCHAR(255) NOT NULL,
+      mobile VARCHAR(30),
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS delivered_items (
+      id SERIAL PRIMARY KEY,
+      name VARCHAR(255) NOT NULL,
+      person_name VARCHAR(255) NOT NULL,
+      mobile VARCHAR(30),
+      delivered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+}
+
+async function ensureAdminCredentials() {
+  const result = await query('SELECT * FROM admins WHERE username = $1 LIMIT 1', [ADMIN_USERNAME]);
+  const passwordHash = bcrypt.hashSync(ADMIN_PASSWORD, 10);
+
+  if (result.rows.length === 0) {
+    await query(
+      `
+        INSERT INTO admins (username, password_hash, email, name)
+        VALUES ($1, $2, $3, $4)
+      `,
+      [ADMIN_USERNAME, passwordHash, ADMIN_EMAIL, ADMIN_NAME]
+    );
+    return;
+  }
+
+  const current = result.rows[0];
+  const passwordMatches = bcrypt.compareSync(ADMIN_PASSWORD, current.password_hash);
+
+  if (!passwordMatches || current.email !== ADMIN_EMAIL || current.name !== ADMIN_NAME) {
+    await query(
+      `
+        UPDATE admins
+        SET password_hash = $2, email = $3, name = $4
+        WHERE username = $1
+      `,
+      [ADMIN_USERNAME, passwordHash, ADMIN_EMAIL, ADMIN_NAME]
+    );
+  }
 }
 
 // ==================== MULTER (File Upload) ====================
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, path.join(__dirname, 'uploads')),
+  destination: (req, file, cb) => cb(null, uploadsDir),
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname);
     cb(null, `${Date.now()}-${Math.round(Math.random() * 1000)}${ext}`);
@@ -80,7 +186,7 @@ const storage = multer.diskStorage({
 });
 const upload = multer({
   storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB max
+  limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     const allowed = /jpeg|jpg|png|gif|webp/;
     const ext = allowed.test(path.extname(file.originalname).toLowerCase());
@@ -108,199 +214,319 @@ function authMiddleware(req, res, next) {
 // =====================================================
 
 // ==================== AUTH ====================
-app.post('/api/auth/login', (req, res) => {
-  const { username, password } = req.body;
-  if (!username || !password) {
-    return res.status(400).json({ error: 'Username and password required' });
+app.post('/api/auth/login', async (req, res, next) => {
+  try {
+    const { username, password } = req.body;
+    if (!username || !password) {
+      return res.status(400).json({ error: 'Username and password required' });
+    }
+
+    const result = await query('SELECT * FROM admins WHERE username = $1 LIMIT 1', [username]);
+    const admin = result.rows[0];
+
+    if (!admin || !bcrypt.compareSync(password, admin.password_hash)) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    const token = jwt.sign({ username: admin.username }, JWT_SECRET, { expiresIn: '24h' });
+    res.json({
+      token,
+      admin: mapAdmin(admin)
+    });
+  } catch (error) {
+    next(error);
   }
-  const db = readDB();
-  if (username !== db.admin.username || !bcrypt.compareSync(password, db.admin.password)) {
-    return res.status(401).json({ error: 'Invalid credentials' });
-  }
-  const token = jwt.sign({ username }, JWT_SECRET, { expiresIn: '24h' });
-  res.json({
-    token,
-    admin: { username: db.admin.username, email: db.admin.email, name: db.admin.name }
-  });
 });
 
-app.get('/api/auth/verify', authMiddleware, (req, res) => {
-  const db = readDB();
-  res.json({ admin: { username: db.admin.username, email: db.admin.email, name: db.admin.name } });
+app.get('/api/auth/verify', authMiddleware, async (req, res, next) => {
+  try {
+    const result = await query('SELECT * FROM admins WHERE username = $1 LIMIT 1', [req.admin.username]);
+    const admin = result.rows[0];
+    if (!admin) {
+      return res.status(404).json({ error: 'Admin not found' });
+    }
+    res.json({ admin: mapAdmin(admin) });
+  } catch (error) {
+    next(error);
+  }
 });
 
 // ==================== FOUND ITEMS ====================
-app.get('/api/items/found', (req, res) => {
-  const db = readDB();
-  let items = [...db.foundItems];
+app.get('/api/items/found', async (req, res, next) => {
+  try {
+    const search = req.query.search?.trim();
+    const params = [];
+    let sql = `
+      SELECT id, name, place_found, location, image, created_at
+      FROM found_items
+    `;
 
-  // Search filter
-  if (req.query.search) {
-    const s = req.query.search.toLowerCase();
-    items = items.filter(i =>
-      i.name.toLowerCase().includes(s) ||
-      i.placeFound.toLowerCase().includes(s) ||
-      i.location.toLowerCase().includes(s)
+    if (search) {
+      params.push(`%${search.toLowerCase()}%`);
+      sql += `
+        WHERE LOWER(name) LIKE $1
+           OR LOWER(place_found) LIKE $1
+           OR LOWER(location) LIKE $1
+      `;
+    }
+
+    sql += ' ORDER BY created_at DESC';
+    const result = await query(sql, params);
+    res.json(result.rows.map(mapFoundItem));
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.post('/api/items/found', upload.single('image'), async (req, res, next) => {
+  try {
+    const { name, placeFound, location } = req.body;
+    if (!name || !placeFound || !location) {
+      return res.status(400).json({ error: 'name, placeFound, and location are required' });
+    }
+
+    const result = await query(
+      `
+        INSERT INTO found_items (name, place_found, location, image)
+        VALUES ($1, $2, $3, $4)
+        RETURNING id, name, place_found, location, image, created_at
+      `,
+      [name, placeFound, location, toUploadPath(req.file)]
     );
-  }
 
-  // Sort newest first
-  items.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-  res.json(items);
+    res.status(201).json(mapFoundItem(result.rows[0]));
+  } catch (error) {
+    next(error);
+  }
 });
 
-app.post('/api/items/found', upload.single('image'), (req, res) => {
-  const { name, placeFound, location } = req.body;
-  if (!name || !placeFound || !location) {
-    return res.status(400).json({ error: 'name, placeFound, and location are required' });
+app.delete('/api/items/found/:id', async (req, res, next) => {
+  try {
+    const result = await query('DELETE FROM found_items WHERE id = $1 RETURNING image', [req.params.id]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Item not found' });
+    }
+
+    const image = result.rows[0].image;
+    if (image) {
+      const imageFile = path.join(__dirname, image.replace(/^\/+/, ''));
+      if (fs.existsSync(imageFile)) {
+        fs.unlinkSync(imageFile);
+      }
+    }
+
+    res.json({ success: true });
+  } catch (error) {
+    next(error);
   }
-  const db = readDB();
-  const newItem = {
-    id: getNextId(),
-    name,
-    placeFound,
-    location,
-    image: req.file ? `/uploads/${req.file.filename}` : null,
-    createdAt: new Date().toISOString()
-  };
-  // Re-read db since getNextId wrote to it
-  const freshDb = readDB();
-  freshDb.foundItems.push(newItem);
-  writeDB(freshDb);
-  res.status(201).json(newItem);
 });
 
-app.delete('/api/items/found/:id', (req, res) => {
-  const db = readDB();
-  const id = parseInt(req.params.id) || req.params.id;
-  const item = db.foundItems.find(i => i.id === id || String(i.id) === String(req.params.id));
-  if (!item) return res.status(404).json({ error: 'Item not found' });
+// ==================== LOST ITEMS ====================
+app.get('/api/items/lost', async (req, res, next) => {
+  try {
+    const search = req.query.search?.trim();
+    const params = [];
+    let sql = `
+      SELECT id, name, place_lost, id_no, mobile, days_ago, image, created_at
+      FROM lost_items
+    `;
 
-  // Delete associated image
-  if (item.image) {
-    const imgPath = path.join(__dirname, item.image);
-    if (fs.existsSync(imgPath)) fs.unlinkSync(imgPath);
+    if (search) {
+      params.push(`%${search.toLowerCase()}%`);
+      sql += `
+        WHERE LOWER(name) LIKE $1
+           OR LOWER(place_lost) LIKE $1
+           OR LOWER(id_no) LIKE $1
+      `;
+    }
+
+    sql += ' ORDER BY created_at DESC';
+    const result = await query(sql, params);
+    res.json(result.rows.map(mapLostItem));
+  } catch (error) {
+    next(error);
   }
-
-  db.foundItems = db.foundItems.filter(i => i.id !== item.id);
-  writeDB(db);
-  res.json({ success: true });
 });
 
-// ==================== LOST ITEMS (TICKETS) ====================
-app.get('/api/items/lost', (req, res) => {
-  const db = readDB();
-  let items = [...db.lostItems];
+app.post('/api/items/lost', upload.single('image'), async (req, res, next) => {
+  try {
+    const { name, placeLost, idNo, mobile, daysAgo } = req.body;
+    if (!name || !placeLost || !idNo || !mobile) {
+      return res.status(400).json({ error: 'name, placeLost, idNo, and mobile are required' });
+    }
 
-  if (req.query.search) {
-    const s = req.query.search.toLowerCase();
-    items = items.filter(i =>
-      i.name.toLowerCase().includes(s) ||
-      i.placeLost.toLowerCase().includes(s) ||
-      (i.idNo && i.idNo.toLowerCase().includes(s))
+    const result = await query(
+      `
+        INSERT INTO lost_items (name, place_lost, id_no, mobile, days_ago, image)
+        VALUES ($1, $2, $3, $4, $5, $6)
+        RETURNING id, name, place_lost, id_no, mobile, days_ago, image, created_at
+      `,
+      [name, placeLost, idNo, mobile, daysAgo || 'Today', toUploadPath(req.file)]
     );
-  }
 
-  items.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-  res.json(items);
+    res.status(201).json(mapLostItem(result.rows[0]));
+  } catch (error) {
+    next(error);
+  }
 });
 
-app.post('/api/items/lost', upload.single('image'), (req, res) => {
-  const { name, placeLost, idNo, mobile, daysAgo } = req.body;
-  if (!name || !placeLost || !idNo || !mobile) {
-    return res.status(400).json({ error: 'name, placeLost, idNo, and mobile are required' });
-  }
-  const db = readDB();
-  const newItem = {
-    id: getNextId(),
-    name,
-    placeLost,
-    idNo,
-    mobile,
-    daysAgo: daysAgo || 'Today',
-    image: req.file ? `/uploads/${req.file.filename}` : null,
-    createdAt: new Date().toISOString()
-  };
-  const freshDb = readDB();
-  freshDb.lostItems.push(newItem);
-  writeDB(freshDb);
-  res.status(201).json(newItem);
-});
+app.delete('/api/items/lost/:id', async (req, res, next) => {
+  try {
+    const result = await query('DELETE FROM lost_items WHERE id = $1 RETURNING image', [req.params.id]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Item not found' });
+    }
 
-app.delete('/api/items/lost/:id', (req, res) => {
-  const db = readDB();
-  const id = parseInt(req.params.id) || req.params.id;
-  db.lostItems = db.lostItems.filter(i => String(i.id) !== String(id));
-  writeDB(db);
-  res.json({ success: true });
+    const image = result.rows[0].image;
+    if (image) {
+      const imageFile = path.join(__dirname, image.replace(/^\/+/, ''));
+      if (fs.existsSync(imageFile)) {
+        fs.unlinkSync(imageFile);
+      }
+    }
+
+    res.json({ success: true });
+  } catch (error) {
+    next(error);
+  }
 });
 
 // ==================== HANDOVER ITEMS ====================
-app.get('/api/items/handover', (req, res) => {
-  const db = readDB();
-  res.json(db.handoverItems);
-});
-
-app.post('/api/items/handover', (req, res) => {
-  const { name, personName, mobile } = req.body;
-  if (!name || !personName) {
-    return res.status(400).json({ error: 'name and personName are required' });
+app.get('/api/items/handover', async (req, res, next) => {
+  try {
+    const result = await query(
+      `
+        SELECT id, name, person_name, mobile, created_at
+        FROM handover_items
+        ORDER BY created_at DESC
+      `
+    );
+    res.json(result.rows.map(mapHandoverItem));
+  } catch (error) {
+    next(error);
   }
-  const db = readDB();
-  const newItem = {
-    id: getNextId(),
-    name,
-    personName,
-    mobile: mobile || '',
-    createdAt: new Date().toISOString()
-  };
-  const freshDb = readDB();
-  freshDb.handoverItems.push(newItem);
-  writeDB(freshDb);
-  res.status(201).json(newItem);
 });
 
-app.delete('/api/items/handover/:id', (req, res) => {
-  const db = readDB();
-  const id = parseInt(req.params.id) || req.params.id;
-  db.handoverItems = db.handoverItems.filter(i => String(i.id) !== String(id));
-  writeDB(db);
-  res.json({ success: true });
+app.post('/api/items/handover', async (req, res, next) => {
+  try {
+    const { name, personName, mobile } = req.body;
+    if (!name || !personName) {
+      return res.status(400).json({ error: 'name and personName are required' });
+    }
+
+    const result = await query(
+      `
+        INSERT INTO handover_items (name, person_name, mobile)
+        VALUES ($1, $2, $3)
+        RETURNING id, name, person_name, mobile, created_at
+      `,
+      [name, personName, mobile || '']
+    );
+
+    res.status(201).json(mapHandoverItem(result.rows[0]));
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.delete('/api/items/handover/:id', async (req, res, next) => {
+  try {
+    const result = await query('DELETE FROM handover_items WHERE id = $1 RETURNING id', [req.params.id]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Item not found' });
+    }
+    res.json({ success: true });
+  } catch (error) {
+    next(error);
+  }
 });
 
 // ==================== DELIVER (handover → delivered) ====================
-app.post('/api/items/deliver/:id', (req, res) => {
-  const db = readDB();
-  const id = parseInt(req.params.id) || req.params.id;
-  const item = db.handoverItems.find(i => String(i.id) === String(id));
-  if (!item) return res.status(404).json({ error: 'Item not found in handover list' });
+app.post('/api/items/deliver/:id', async (req, res, next) => {
+  const client = await pool.connect();
 
-  db.handoverItems = db.handoverItems.filter(i => String(i.id) !== String(id));
-  db.deliveredItems.push({
-    ...item,
-    deliveredAt: new Date().toISOString()
-  });
-  writeDB(db);
-  res.json({ success: true, item });
+  try {
+    await client.query('BEGIN');
+
+    const handoverResult = await client.query(
+      `
+        DELETE FROM handover_items
+        WHERE id = $1
+        RETURNING id, name, person_name, mobile, created_at
+      `,
+      [req.params.id]
+    );
+
+    if (handoverResult.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'Item not found in handover list' });
+    }
+
+    const item = handoverResult.rows[0];
+    const deliveredResult = await client.query(
+      `
+        INSERT INTO delivered_items (name, person_name, mobile, delivered_at)
+        VALUES ($1, $2, $3, CURRENT_TIMESTAMP)
+        RETURNING id, name, person_name, mobile, delivered_at
+      `,
+      [item.name, item.person_name, item.mobile]
+    );
+
+    await client.query('COMMIT');
+
+    res.json({
+      success: true,
+      item: mapDeliveredItem(deliveredResult.rows[0])
+    });
+  } catch (error) {
+    await client.query('ROLLBACK');
+    next(error);
+  } finally {
+    client.release();
+  }
 });
 
 // ==================== DELIVERED ITEMS ====================
-app.get('/api/items/delivered', (req, res) => {
-  const db = readDB();
-  const items = [...db.deliveredItems].sort((a, b) => new Date(b.deliveredAt || b.createdAt) - new Date(a.deliveredAt || a.createdAt));
-  res.json(items);
+app.get('/api/items/delivered', async (req, res, next) => {
+  try {
+    const result = await query(
+      `
+        SELECT id, name, person_name, mobile, delivered_at
+        FROM delivered_items
+        ORDER BY delivered_at DESC
+      `
+    );
+    res.json(result.rows.map(mapDeliveredItem));
+  } catch (error) {
+    next(error);
+  }
 });
 
-// ==================== STATS (Admin Dashboard) ====================
-app.get('/api/stats', (req, res) => {
-  const db = readDB();
-  res.json({
-    foundItems: db.foundItems.length,
-    lostItems: db.lostItems.length,
-    handoverItems: db.handoverItems.length,
-    deliveredItems: db.deliveredItems.length,
-    totalItems: db.foundItems.length + db.lostItems.length + db.handoverItems.length + db.deliveredItems.length
-  });
+// ==================== STATS ====================
+app.get('/api/stats', async (req, res, next) => {
+  try {
+    const [found, lost, handover, delivered] = await Promise.all([
+      query('SELECT COUNT(*)::int AS count FROM found_items'),
+      query('SELECT COUNT(*)::int AS count FROM lost_items'),
+      query('SELECT COUNT(*)::int AS count FROM handover_items'),
+      query('SELECT COUNT(*)::int AS count FROM delivered_items')
+    ]);
+
+    const foundItems = found.rows[0].count;
+    const lostItems = lost.rows[0].count;
+    const handoverItems = handover.rows[0].count;
+    const deliveredItems = delivered.rows[0].count;
+
+    res.json({
+      foundItems,
+      lostItems,
+      handoverItems,
+      deliveredItems,
+      totalItems: foundItems + lostItems + handoverItems + deliveredItems
+    });
+  } catch (error) {
+    next(error);
+  }
 });
 
 // ==================== IMAGE UPLOAD ====================
@@ -310,7 +536,6 @@ app.post('/api/upload', upload.single('image'), (req, res) => {
 });
 
 // ==================== SERVE REACT BUILD IN PRODUCTION ====================
-// Only enable this when frontend and backend are deployed together.
 if (process.env.SERVE_FRONTEND === 'true') {
   app.use(express.static(path.join(__dirname, '..', 'build')));
   app.get('*', (req, res) => {
@@ -328,7 +553,17 @@ app.use((err, req, res, next) => {
 });
 
 // ==================== START SERVER ====================
-app.listen(PORT, () => {
-  console.log(`FindMyItem API server running on http://localhost:${PORT}`);
-  console.log(`Admin credentials: username=admin, password=admin123`);
+async function startServer() {
+  await ensureSchema();
+  await ensureAdminCredentials();
+
+  app.listen(PORT, () => {
+    console.log(`FindMyItem API server running on http://localhost:${PORT}`);
+    console.log(`Admin credentials: username=${ADMIN_USERNAME}`);
+  });
+}
+
+startServer().catch((error) => {
+  console.error('Failed to start server:', error);
+  process.exit(1);
 });

@@ -70,8 +70,8 @@ Add a rewrite rule:
 
 Current default admin login is:
 
-- Username: `admin`
-- Password: `admin123`
+- Username: `nihanth1006`
+- Password: `Nihanth@2006#`
 
 You should change this before real use.
 

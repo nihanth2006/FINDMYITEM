@@ -79,7 +79,7 @@ const LoginPage = ({ onNavigate, onLogin }) => {
             </button>
           </form>
 
-          <p className="login-hint">Default: admin / admin123</p>
+          <p className="login-hint">Admin: nihanth1006 / Nihanth@2006#</p>
         </div>
       </div>
     </div>
