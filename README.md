@@ -30,6 +30,7 @@ Admin verifies ownership and manages the handover process.
 🗄️ Database: PostgreSQL (as per your latest commit)
 🔗 API: REST API
 🎨 Icons: Lucide
+
 📂 Project Structure
 FINDMYITEM/
 │
@@ -47,6 +48,8 @@ FINDMYITEM/
 ├── DEPLOY_RENDER.md     # Deployment guide (Render)
 │
 └── README.md            # Project documentation
+
+
 ⚙️ Installation & Setup
 1️⃣ Clone Repository
 git clone https://github.com/your-username/findmyitem.git
@@ -63,9 +66,7 @@ npm start
 cd ..
 npm start
 🔐 Environment Variables
-
 Create a .env file inside /server:
-
 PORT=5000
 DATABASE_URL=your_postgresql_url
 JWT_SECRET=your_secret_key
@@ -86,10 +87,9 @@ Fork the repo
 Create a branch
 Make changes
 Submit PR
-🏫 Developed For
 
+🏫 Developed For
 KL University – Koneru Lakshmaiah Education Foundation
 
 👨‍💻 Author
-
 Nihanth B
