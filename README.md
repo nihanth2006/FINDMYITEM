@@ -41,15 +41,5 @@ Admin verifies ownership and manages the handover process.
 ---
 
 ## 📂 Project Structure
-FINDMYITEM/
-├── public/ # Static assets
-├── src/ # React frontend source
-├── server/ # Express backend + APIs
-├── .eslintrc.json # Lint configuration
-├── .gitignore # Ignored files
-├── package.json # Project dependencies
-├── package-lock.json
-├── render.yaml # Render deployment config
-├── vercel.json # Vercel deployment config
-├── DEPLOY_RENDER.md # Deployment guide (Render)
-└── README.md # Project documentation
+<img width="863" height="362" alt="image" src="https://github.com/user-attachments/assets/8f1e7417-1522-449b-bfbf-0b264fa896ea" />
+
