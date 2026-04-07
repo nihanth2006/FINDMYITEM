@@ -1,42 +1,95 @@
-📌 Overview
+📦 FINDMYITEM – VAULT (Lost & Found System)
+🧾 About the Project
 
-A web-based application that helps students quickly locate lost items inside a university campus.
+FindMyItem (VAULT) is a university-wide Lost & Found Management System developed for KL University.
+It enables students and staff to report, search, and recover lost items through a secure and organized platform.
 
-🎯 Problem Statement
+🚀 How It Works
+🔍 Report Lost Items
 
-Students waste time searching for misplaced items.
+Users submit a ticket with item details and images.
 
-💡 Solution
+📥 Add Found Items
 
-A categorized search system with optimized filters for fast lookup.
+Users can list found items to help owners locate them.
 
-🛠 Tech Stack
+🤝 Secure Handover
 
-React.js
+Admin verifies ownership and manages the handover process.
 
-Spring Boot
+✨ Features
+📸 Image-based lost item reporting
+🔎 Search & filter found items
+🔐 Admin dashboard for verification
+📦 Handover & delivery tracking
+📜 Complete delivery history
+☁️ Image upload support
+🛠️ Tech Stack
+⚛️ Frontend: React.js
+🌐 Backend: Node.js + Express.js
+🗄️ Database: PostgreSQL (as per your latest commit)
+🔗 API: REST API
+🎨 Icons: Lucide
+📂 Project Structure
+FINDMYITEM/
+│
+├── public/              # Static assets
+├── src/                 # React frontend source
+├── server/              # Express backend + APIs
+│
+├── .eslintrc.json       # Lint configuration
+├── .gitignore           # Ignored files
+├── package.json         # Project dependencies
+├── package-lock.json
+│
+├── render.yaml          # Render deployment config
+├── vercel.json          # Vercel deployment config
+├── DEPLOY_RENDER.md     # Deployment guide (Render)
+│
+└── README.md            # Project documentation
+⚙️ Installation & Setup
+1️⃣ Clone Repository
+git clone https://github.com/your-username/findmyitem.git
+cd findmyitem
+2️⃣ Install Dependencies
+npm install
+cd server && npm install
+3️⃣ Run the Project
+# Run backend
+cd server
+npm start
 
-MySQL
+# Run frontend
+cd ..
+npm start
+🔐 Environment Variables
 
-👨‍💻 My Role
+Create a .env file inside /server:
 
-UI design
+PORT=5000
+DATABASE_URL=your_postgresql_url
+JWT_SECRET=your_secret_key
+🚀 Deployment
+🌐 Frontend: Vercel (vercel.json)
+⚙️ Backend: Render (render.yaml)
 
-Backend logic
+Refer:
+👉 DEPLOY_RENDER.md for backend deployment steps
 
-Search optimization
+💡 Future Enhancements
+🤖 AI-based lost item matching
+🔔 Email/SMS notifications
+📱 Mobile app version
+🧾 QR-based item verification
+🤝 Contribution
+Fork the repo
+Create a branch
+Make changes
+Submit PR
+🏫 Developed For
 
-🚀 Features
+KL University – Koneru Lakshmaiah Education Foundation
 
-Fast search
+👨‍💻 Author
 
-Category filtering
-
-User-friendly UI
-<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/ecd82d81-676f-4805-9e32-328ae86e5bfd" />
-<img width="1064" height="554" alt="image" src="https://github.com/user-attachments/assets/5789ddea-829a-4ce8-b6f8-5c9bb5b2f7ec" />
-<img width="1059" height="555" alt="image" src="https://github.com/user-attachments/assets/ad7c31fa-d4f8-48d6-ad8d-e42a1a8bb0f3" />
-<img width="1063" height="470" alt="image" src="https://github.com/user-attachments/assets/5fe7129a-7758-4528-afef-a7d0f8b00971" />
-
-
-
+Nihanth B
